@@ -1,3 +1,4 @@
+
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -5,17 +6,8 @@
   <title>ConstituChall 🇨🇴 – Prototipo</title>
   <style>
     :root{
-      --bg:#0f172a;          /* slate-900 */
-      --panel:#111827;       /* gray-900 */
-      --card:#1f2937;        /* gray-800 */
-      --muted:#94a3b8;       /* slate-400 */
-      --text:#e5e7eb;        /* gray-200 */
-      --accent:#22c55e;      /* green-500 */
-      --accent2:#60a5fa;     /* blue-400 */
-      --warn:#f59e0b;        /* amber-500 */
-      --danger:#ef4444;      /* red-500 */
-      --ok:#10b981;          /* emerald-500 */
-      --purple:#a78bfa;      /* purple-400 */
+      --bg:#0f172a; --panel:#111827; --card:#1f2937; --muted:#94a3b8; --text:#e5e7eb;
+      --accent:#22c55e; --accent2:#60a5fa; --warn:#f59e0b; --danger:#ef4444; --ok:#10b981; --purple:#a78bfa;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:linear-gradient(180deg,#0b1224,#0f172a 30%,#0b1224);color:var(--text)}
@@ -41,7 +33,6 @@
     .ok{background:var(--ok);color:#052e16}
 
     .board{padding:16px}
-
     .topbar{display:grid;grid-template-columns:1fr auto auto auto auto;gap:10px;align-items:center}
     .turn-big{grid-column:1/-1;background:#0b1224;border:1px solid #334155;border-radius:14px;padding:10px 14px;font-size:clamp(20px,4.5vw,30px);font-weight:900;display:flex;align-items:center;gap:10px}
     .turn-dot{width:14px;height:14px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(16,185,129,.15)}
@@ -70,14 +61,16 @@
     .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .muted{color:#94a3b8;font-size:13px}
 
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:20}
     .modal .inner{max-width:900px;width:100%;background:var(--panel);border:1px solid #1f2937;border-radius:16px;padding:16px}
     .modal h2{margin:0 0 8px}
     .modal pre{white-space:pre-wrap;background:#0b1224;border:1px solid #334155;padding:10px;border-radius:10px;color:#e5e7eb;max-height:260px;overflow:auto}
+    .field{display:grid;gap:6px;margin:8px 0}
+    .field input{padding:10px;border-radius:10px;border:1px solid #334155;background:#0b1224;color:#e5e7eb}
+    .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 
     .small{font-size:12px}
     .credits{max-width:1200px;margin:10px auto 30px;padding:0 16px;color:#9ca3af;font-size:12px}
-
     .flag{filter:drop-shadow(0 0 6px rgba(255,255,255,.25))}
 
     @media (max-width:920px){
@@ -99,10 +92,16 @@
       <div class="section-title">Jugadores (hasta 6)</div>
       <div id="players" class="players"></div>
       <button id="addPlayer" class="add">+ Agregar jugador</button>
+
       <div class="controls">
         <button id="start" class="primary">▶️ Iniciar partida</button>
         <button id="reset" class="ghost">↺ Reiniciar</button>
       </div>
+
+      <!-- Sesión: debajo de iniciar/reiniciar -->
+      <div class="section-title">Sesión</div>
+      <div id="sessionBox" class="players"></div>
+
       <div style="margin-top:12px;display:grid;gap:8px">
         <div class="section-title">Rápidos</div>
         <button id="openRules" class="ghost">📜 Reglas</button>
@@ -145,7 +144,7 @@
           <button id="validate" class="ok" disabled>✅ Validar</button>
           <button id="pass" class="warn" disabled>⏭️ Pasar turno</button>
         </div>
-        <div class="muted small" style="margin-top:8px">Tip: el indicador «Ronda» reemplaza las posiciones del tablero físico. Los eventos añaden sanciones/bonos.</div>
+        <div class="muted small" style="margin-top:8px">Tip: «Ronda» reemplaza posiciones del tablero físico. Los eventos añaden sanciones/bonos.</div>
       </div>
 
       <div class="grid-2" style="margin-top:12px">
@@ -171,71 +170,236 @@
       <h2>📜 Reglas del juego</h2>
       <ol>
         <li>Juegan 2–6 personas. Añade nombres y presiona <b>Iniciar partida</b>.</li>
-        <li>En tu turno presiona <b>🎲 Lanzar dado</b>. El color define la <i>categoría</i>. Puede haber <b>⚡ eventos especiales</b>.</li>
-        <li>Presiona <b>🃏 Sacar tarjeta</b> para ver la pregunta/reto del mazo.</li>
-        <li>Responde (opción múltiple) o argumenta (caso real). Tienes <b>10 segundos</b>. Luego <b>✅ Validar</b>.</li>
-        <li>Correcto: +1 Carta (o más si hay bono). Gana quien llegue a <b>5</b>.</li>
+        <li>En tu turno: <b>🎲 Lanzar dado</b> → color define la <i>categoría</i> (pueden salir <b>⚡ eventos</b>).</li>
+        <li><b>🃏 Sacar tarjeta</b>: pregunta o caso. <b>10 segundos</b> para responder.</li>
+        <li><b>✅ Validar</b>: suma/resta cartas según resultado/bonos.</li>
+        <li>Gana quien llegue a <b>5 cartas</b>.</li>
       </ol>
-      <p class="muted small">«Ronda» = conteo de turnos globales (no posiciones físicas). Eventos: x2 (solo si aciertas), +2, -2, robar 1; <b>pierde turno solo si fallas</b>.</p>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <p class="muted small">Eventos: x2 (si aciertas), +2, -2, robar 1; <b>pierde turno solo si fallas</b>.</p>
+      <div class="row">
         <button class="ghost" onclick="toggleModal('rulesModal',false)">Cerrar</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Editor -->
+  <!-- Modal: Editor (acceso con login) -->
   <div id="editorModal" class="modal" role="dialog" aria-modal="true">
     <div class="inner">
       <h2>🛠️ Editor de preguntas (JSON)</h2>
-      <p class="muted small">Edita o pega tu banco. Cambios se guardan en esta sesión (LocalStorage).</p>
+      <p class="muted small" id="editorInfo">Edita o pega tu banco. Cambios se guardan en esta sesión (LocalStorage).</p>
       <pre id="editorArea" contenteditable="true"></pre>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <div class="row">
         <button class="ghost" onclick="toggleModal('editorModal',false)">Cancelar</button>
-        <button class="primary" onclick="saveBank()">💾 Guardar</button>
+        <button id="saveBtn" class="primary" onclick="saveBank()">💾 Guardar</button>
       </div>
     </div>
   </div>
 
+  <!-- Modal: Login (dos usuarios) -->
+  <div id="loginModal" class="modal" role="dialog" aria-modal="true">
+    <div class="inner">
+      <h2>🔐 Iniciar sesión</h2>
+      <div class="field">
+        <label>Usuario</label>
+        <input id="loginUser" placeholder="Escribe tu usuario">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input id="loginPass" type="password" placeholder="Escribe tu contraseña">
+      </div>
+      <div class="row">
+        <button class="ghost" onclick="closeLogin()">Cancelar</button>
+        <button class="primary" onclick="doLogin()">Entrar</button>
+      </div>
+      <p class="muted small">Acceso reservado para edición del banco de preguntas.</p>
+    </div>
+  </div>
+
   <script>
-    // ----- Configuración -----
+    // =======================
+    //  CONFIGURACIÓN
+    // =======================
     const TIMER_SECONDS = 10;
 
-    // ----- Banco DEMO (editable en el editor JSON) -----
-    const DEFAULT_BANK = {
-      principios: [
-        { type:'mc', q:'El Artículo 1 establece que Colombia es un Estado…', options:['Unitario, social de derecho, democrático, participativo y pluralista','Federal, confesional y militar','Neoliberal, tecnocrático y centralista'], answer:0, ref:'Art.1' },
-        { type:'mc', q:'La soberanía reside…', options:['En las Fuerzas Militares','Exclusivamente en el Presidente','En el pueblo del cual emana el poder público'], answer:2, ref:'Art.3' },
-        { type:'mc', q:'La Constitución reconoce la diversidad…', options:['Étnica y cultural de la Nación','Únicamente religiosa','Exclusivamente lingüística'], answer:0, ref:'Art.7' },
-        { type:'mc', q:'El español es el idioma oficial, pero…', options:['No se permiten otras lenguas','Las lenguas y dialectos de los grupos étnicos son también oficiales en sus territorios','Solo el inglés tiene validez'], answer:1, ref:'Art.10' }
-      ],
-      derechos: [
-        { type:'mc', q:'El derecho a la vida (Art.11) es…', options:['Relativo','Inalienable e inviolable','Condicionado a mayoría de edad'], answer:1, ref:'Art.11' },
-        { type:'mc', q:'La libertad de expresión (Art.20) incluye…', options:['Censura previa','Buscar, recibir y difundir información','Solo opinar en privado'], answer:1, ref:'Art.20' },
-        { type:'mc', q:'El habeas corpus protege contra…', options:['Detenciones arbitrarias','Multas de tránsito','Embargos civiles'], answer:0, ref:'Art.30' },
-        { type:'mc', q:'La igualdad (Art.13) implica…', options:['Trato idéntico en todo caso','Medidas en favor de grupos discriminados o marginados','Privilegios por estrato'], answer:1, ref:'Art.13' }
-      ],
-      participacion: [
-        { type:'mc', q:'Un mecanismo de participación ciudadana es…', options:['Referendo','Auto de imputación','Acta de conciliación'], answer:0, ref:'Art.103' },
-        { type:'mc', q:'El voto en Colombia es…', options:['Obligatorio','Un derecho y un deber ciudadano','Solo para mayores de 21'], answer:1, ref:'Art.258' },
-        { type:'mc', q:'La acción de tutela sirve para…', options:['Reclamar derechos fundamentales cuando no hay otro medio de defensa','Demandar impuestos','Anular elecciones'], answer:0, ref:'Art.86' }
-      ],
-      casos: [
-        { type:'open', q:'Una estudiante es expulsada por usar símbolos religiosos. ¿Qué derechos identifica y qué haría?', rubric:'Igualdad (Art.13) y libertad de cultos (Art.19). Argumentar vías: diálogo institucional, personería, tutela.' },
-        { type:'open', q:'Un hospital se niega a atender una urgencia por falta de pago. ¿Qué acción procede?', rubric:'Derecho a la vida y salud (Art.11, jurisprudencia); atención inmediata. Tutela por perjuicio irremediable.' },
-        { type:'open', q:'En redes, un alcalde bloquea a críticos del municipio. ¿Qué principio/derecho se afecta?', rubric:'Publicidad de la actuación pública, libertad de expresión (Art.20), participación. Control judicial.' }
-      ]
-    };
+    // Usuarios autorizados (usuario -> { pass, display })
+// Usuarios autorizados (usuario -> { pass, display })
+const AUTH_USERS = {
+  "9018646":   { pass: "9018646",   display: "Santiago Laiseca Hoyos" }, // <— clave correcta: 9018646
+  "9029227":   { pass: "9029227",  display: "Danna Isabella Panesso Baez" },
+  "9029614":   { pass: "9029614",  display: "Diana Marcela Crespo Luna" },
+  "9019359":   { pass: "9019359",  display: "Laura Sofia Realpe Chamarro" }
+};
 
-    // ----- Eventos especiales (bonos y sanciones) -----
+    // =======================
+// =======================
+//  BANCO DEMO (ACTUALIZADO)
+// =======================
+const DEFAULT_BANK = {
+  principios: [
+    { type:'mc', q:'El Artículo 1 establece que Colombia es un Estado…', options:['Unitario, social de derecho, democrático, participativo y pluralista','Federal, confesional y militar','Neoliberal, tecnocrático y centralista'], answer:0, ref:'Art.1' },
+    { type:'mc', q:'La soberanía reside…', options:['En las Fuerzas Militares','Exclusivamente en el Presidente','En el pueblo del cual emana el poder público'], answer:2, ref:'Art.3' },
+    { type:'mc', q:'La Constitución reconoce la diversidad…', options:['Étnica y cultural de la Nación','Únicamente religiosa','Exclusivamente lingüística'], answer:0, ref:'Art.7' },
+    { type:'mc', q:'El español es el idioma oficial, pero…', options:['No se permiten otras lenguas','Las lenguas y dialectos de los grupos étnicos son también oficiales en sus territorios','Solo el inglés tiene validez'], answer:1, ref:'Art.10' },
+
+    // NUEVAS (Principios)
+    {
+      type: 'mc',
+      q: 'Según el artículo 2, ¿cuál de las siguientes NO es una finalidad esencial del Estado colombiano?',
+      options: [
+        'Proteger a todas las personas en su vida, honra y bienes',
+        'Garantizar la efectividad de los principios, derechos y deberes',
+        'Fomentar el monopolio del poder en una sola rama del Estado',
+        'Facilitar la participación ciudadana en las decisiones que los afectan'
+      ],
+      answer: 2,
+      ref: 'Art. 2 – Fines esenciales del Estado'
+    },
+    {
+      type: 'mc',
+      q: 'El artículo 1 establece que Colombia es un Estado social de derecho fundado en:',
+      options: [
+        'El centralismo, la religión católica y la propiedad privada',
+        'El respeto a la dignidad humana, el trabajo y la solidaridad',
+        'La autoridad del Ejecutivo y la obediencia al Estado',
+        'El desarrollo económico y la inversión extranjera'
+      ],
+      answer: 1,
+      ref: 'Art. 1 – Principios fundamentales'
+    }
+  ],
+
+  derechos: [
+    { type:'mc', q:'El derecho a la vida (Art.11) es…', options:['Relativo','Inalienable e inviolable','Condicionado a mayoría de edad'], answer:1, ref:'Art.11' },
+    { type:'mc', q:'La libertad de expresión (Art.20) incluye…', options:['Censura previa','Buscar, recibir y difundir información','Solo opinar en privado'], answer:1, ref:'Art.20' },
+    { type:'mc', q:'El habeas corpus protege contra…', options:['Detenciones arbitrarias','Multas de tránsito','Embargos civiles'], answer:0, ref:'Art.30' },
+    { type:'mc', q:'La igualdad (Art.13) implica…', options:['Trato idéntico en todo caso','Medidas en favor de grupos discriminados o marginados','Privilegios por estrato'], answer:1, ref:'Art.13' },
+
+    // NUEVAS (Derechos fundamentales)
+    {
+      type: 'mc',
+      q: 'Según el artículo 13, el Estado colombiano debe:',
+      options: [
+        'Tratar a todos los ciudadanos de forma idéntica sin excepción',
+        'Promover condiciones para que la igualdad sea real y efectiva',
+        'Reconocer privilegios a ciertos grupos minoritarios',
+        'No intervenir en la superación de desigualdades sociales'
+      ],
+      answer: 1,
+      ref: 'Art. 13 – Igualdad y no discriminación'
+    },
+    {
+      type: 'mc',
+      q: 'De acuerdo con el artículo 20, el derecho a la libertad de expresión incluye:',
+      options: [
+        'Publicar solo información aprobada por el Estado',
+        'Difundir pensamientos y opiniones sin censura previa',
+        'Hablar únicamente en medios oficiales',
+        'Prohibir críticas a las autoridades'
+      ],
+      answer: 1,
+      ref: 'Art. 20 – Libertad de expresión y prensa'
+    },
+    {
+      type: 'mc',
+      q: 'Según el artículo 18, ninguna persona puede ser obligada a:',
+      options: [
+        'Cambiar de trabajo',
+        'Profesar una religión o creencia',
+        'Votar en elecciones',
+        'Prestar servicio militar'
+      ],
+      answer: 1,
+      ref: 'Art. 18 – Libertad de conciencia'
+    },
+    {
+      type: 'mc',
+      q: 'El artículo 22 reconoce que la paz es:',
+      options: [
+        'Un valor deseable pero no exigible',
+        'Una obligación exclusiva del gobierno',
+        'Un derecho y deber de obligatorio cumplimiento',
+        'Una condición solo en tiempos de guerra'
+      ],
+      answer: 2,
+      ref: 'Art. 22 – Derecho a la paz'
+    },
+    {
+      type: 'mc',
+      q: 'El artículo 23 establece que toda persona tiene derecho a presentar peticiones respetuosas:',
+      options: [
+        'Solo si pertenece al sector público',
+        'Ante las autoridades y obtener pronta respuesta',
+        'Únicamente a través de abogado',
+        'Una vez al año'
+      ],
+      answer: 1,
+      ref: 'Art. 23 – Derecho de petición'
+    },
+    {
+      type: 'mc',
+      q: 'El artículo 24 garantiza que todo colombiano puede:',
+      options: [
+        'Desplazarse libremente dentro del territorio nacional',
+        'Salir del país solo con permiso judicial',
+        'Vivir solo en su lugar de nacimiento',
+        'Ser vigilado por las autoridades al viajar'
+      ],
+      answer: 0,
+      ref: 'Art. 24 – Libertad de locomoción y residencia'
+    },
+    {
+      type: 'mc',
+      q: 'Según el artículo 28, ¿cuál es la condición para que alguien sea privado de la libertad?',
+      options: [
+        'Cuando una autoridad lo considera sospechoso',
+        'Solo mediante orden escrita de autoridad judicial competente',
+        'Si un ciudadano lo denuncia',
+        'Por decisión del alcalde'
+      ],
+      answer: 1,
+      ref: 'Art. 28 – Libertad personal y debido proceso'
+    },
+    {
+      type: 'mc',
+      q: 'El artículo 40 establece que todo ciudadano tiene derecho a participar en el poder político, lo que incluye:',
+      options: [
+        'Votar, ser elegido y acceder a cargos públicos',
+        'Crear partidos únicamente si son mayoritarios',
+        'Votar solo en elecciones presidenciales',
+        'Delegar el voto a otra persona'
+      ],
+      answer: 0,
+      ref: 'Art. 40 – Participación política'
+    }
+  ],
+
+  participacion: [
+    { type:'mc', q:'Un mecanismo de participación ciudadana es…', options:['Referendo','Auto de imputación','Acta de conciliación'], answer:0, ref:'Art.103' },
+    { type:'mc', q:'El voto en Colombia es…', options:['Obligatorio','Un derecho y un deber ciudadano','Solo para mayores de 21'], answer:1, ref:'Art.258' },
+    { type:'mc', q:'La acción de tutela sirve para…', options:['Reclamar derechos fundamentales cuando no hay otro medio de defensa','Demandar impuestos','Anular elecciones'], answer:0, ref:'Art.86' }
+  ],
+
+  casos: [
+    { type:'open', q:'Una estudiante es expulsada por usar símbolos religiosos. ¿Qué derechos identifica y qué haría?', rubric:'Igualdad (Art.13) y libertad de cultos (Art.19). Argumentar vías: diálogo institucional, personería, tutela.' },
+    { type:'open', q:'Un hospital se niega a atender una urgencia por falta de pago. ¿Qué acción procede?', rubric:'Derecho a la vida y salud (Art.11, jurisprudencia); atención inmediata. Tutela por perjuicio irremediable.' },
+    { type:'open', q:'En redes, un alcalde bloquea a críticos del municipio. ¿Qué principio/derecho se afecta?', rubric:'Publicidad de la actuación pública, libertad de expresión (Art.20), participación. Control judicial.' }
+  ]
+};
+
+    // =======================
+    //  EVENTOS (bonos/castigos)
+    // =======================
     const EVENTS = [
       { key:'x2',    label:'Pregunta bono x2',                 desc:'Si aciertas esta tarjeta, ganas 2 cartas en lugar de 1.', color:'#22c55e' },
       { key:'plus2', label:'Gana +2 cartas',                   desc:'Recibes 2 cartas de ciudadanía inmediatamente.',         color:'#60a5fa' },
       { key:'minus2',label:'Sanción -2 cartas',                desc:'Pierdes 2 cartas (sin bajar de 0).',                    color:'#ef4444' },
       { key:'skip',  label:'Pierde próximo turno (si fallas)', desc:'Este castigo solo se aplica si la respuesta es incorrecta.', color:'#f59e0b' },
-      { key:'steal1',label:'Roba 1 al líder',                  desc:'Toma 1 carta del jugador con más cartas (si existe empate, elige al primero).', color:'#a78bfa' }
+      { key:'steal1',label:'Roba 1 al líder',                  desc:'Toma 1 carta del jugador con más cartas (si hay empate, el primero).', color:'#a78bfa' }
     ];
 
-    // ----- Estado del juego -----
+    // =======================
+    //  ESTADO
+    // =======================
     const state = {
       players: [],
       turn: 0,
@@ -246,12 +410,96 @@
       bank: null,
       started: false,
       event: null,
-      skipFlags: {}, // playerIndex: true si salta turno
-      pending: { mult: 1, skipOnFail: false }, // efectos que se aplican al validar
-      timer: { id: null, remaining: 0 }
+      skipFlags: {},
+      pending: { mult: 1, skipOnFail: false },
+      timer: { id: null, remaining: 0 },
+      auth: { user: null, display: null }
     };
 
-    // ----- Utilidades UI -----
+    // =======================
+    //  AUTENTICACIÓN
+    // =======================
+    function isLogged(){ return !!state.auth.user; }
+
+    function clearLoginFields(){
+      const u = document.getElementById('loginUser');
+      const p = document.getElementById('loginPass');
+      if(u) u.value = '';
+      if(p) p.value = '';
+    }
+
+    function openLogin(){
+      clearLoginFields();
+      toggleModal('loginModal', true);
+      setTimeout(()=>document.getElementById('loginUser')?.focus(), 50);
+    }
+
+    function closeLogin(){
+      toggleModal('loginModal', false);
+      clearLoginFields(); // limpiar también al cerrar
+    }
+
+    function doLogin(){
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPass').value;
+      const record = AUTH_USERS[u];
+      if(!record || record.pass !== p){
+        alert('Usuario o contraseña incorrectos.');
+        // por seguridad, limpia ambos
+        clearLoginFields();
+        return;
+      }
+      state.auth.user = u;
+      state.auth.display = record.display;
+      localStorage.setItem('constituchall_session', JSON.stringify({ user:u }));
+      renderSessionBox();
+      toggleModal('loginModal', false);
+      clearLoginFields(); // limpiar inmediatamente tras iniciar sesión
+      log(`🔐 Sesión iniciada: ${record.display} (${u})`);
+    }
+
+    function logout(){
+      state.auth.user = null;
+      state.auth.display = null;
+      localStorage.removeItem('constituchall_session');
+      renderSessionBox();
+      log('🚪 Sesión cerrada.');
+    }
+
+    function restoreSession(){
+      try{
+        const s = JSON.parse(localStorage.getItem('constituchall_session') || 'null');
+        if(s && s.user && AUTH_USERS[s.user]){
+          state.auth.user = s.user;
+          state.auth.display = AUTH_USERS[s.user].display;
+        }
+      }catch{}
+      renderSessionBox();
+    }
+
+    function renderSessionBox(){
+      const box = document.getElementById('sessionBox');
+      box.innerHTML = '';
+      const div = document.createElement('div');
+      div.className = 'player';
+
+      if(isLogged()){
+        div.innerHTML = `
+          <div style="grid-column:1/-1"><b>Sesión:</b> ${state.auth.display} <span class="muted">(${state.auth.user})</span></div>
+          <button class="warn" style="grid-column:1/-1" onclick="logout()">🚪 Cerrar sesión</button>
+        `;
+      } else {
+        div.innerHTML = `
+          <div style="grid-column:1/-1" class="muted small">Solo usuarios autorizados pueden editar el banco (Santiago o Administración).</div>
+          <button class="secondary" style="grid-column:1/-1" onclick="openLogin()">🔐 Iniciar sesión</button>
+        `;
+      }
+      box.appendChild(div);
+    }
+
+    // =======================
+    //  UTILIDADES UI
+    // =======================
     const el = (id) => document.getElementById(id);
     const log = (msg) => {
       const time = new Date().toLocaleTimeString();
@@ -329,6 +577,9 @@
       }[key];
     }
 
+    // =======================
+    //  CRONÓMETRO
+    // =======================
     function startTimer(sec){
       stopTimer();
       state.timer.remaining = sec;
@@ -342,11 +593,9 @@
         }
       },1000);
     }
-
     function stopTimer(){
       if(state.timer.id){ clearInterval(state.timer.id); state.timer.id=null; }
     }
-
     function lockInputs(){
       el('validate').disabled = true;
       const radios = document.querySelectorAll('input[name="opts"]');
@@ -355,10 +604,11 @@
       if (free) free.disabled = true;
     }
 
+    // =======================
+    //  EVENTOS
+    // =======================
     function maybeEvent(){
-      // Reinicia efectos pendientes
       state.pending = { mult: 1, skipOnFail: false };
-      // 25% de probabilidad de evento al sacar tarjeta
       if(Math.random() < 0.25){
         const ev = EVENTS[Math.floor(Math.random()*EVENTS.length)];
         state.event = ev;
@@ -369,7 +619,7 @@
         const idx = state.turn;
         switch(ev.key){
           case 'x2':
-            state.pending.mult = 2; // se aplicará si acierta
+            state.pending.mult = 2; // si acierta
             break;
           case 'plus2':
             applyDelta(idx, +2, 'por evento +2');
@@ -386,8 +636,7 @@
             }
             break; }
           case 'skip':
-            // Ya no se aplica inmediato: solo si fallas esta tarjeta
-            state.pending.skipOnFail = true;
+            state.pending.skipOnFail = true; // solo castiga si falla
             break;
         }
       } else {
@@ -395,6 +644,9 @@
       }
     }
 
+    // =======================
+    //  FLUJO DE TARJETA
+    // =======================
     function drawCard(){
       const cat = categoryByRound(state.round);
       const pool = state.bank[cat];
@@ -403,7 +655,6 @@
       state.currentCard = { ...card, idx };
       state.currentCategory = cat;
 
-      // Render
       const meta = catMeta(cat);
       el('catText').textContent = `${meta.icon} ${meta.label}`;
       el('catDot').style.background = meta.color;
@@ -415,9 +666,8 @@
 
       if(card.type==='mc'){
         card.options.forEach((opt,i)=>{
-          const id = `opt_${i}`;
           const label = document.createElement('label');
-          label.innerHTML = `<input type="radio" name="opts" value="${i}" id="${id}"> <span>${opt}</span>`;
+          label.innerHTML = `<input type="radio" name="opts" value="${i}"> <span>${opt}</span>`;
           el('options').appendChild(label);
         });
       } else {
@@ -427,7 +677,6 @@
       }
       log(`🃏 Tarjeta de «${meta.label}» sacada.`);
       maybeEvent();
-      // Inicia cronómetro
       startTimer(TIMER_SECONDS);
       el('validate').disabled=false;
     }
@@ -445,13 +694,11 @@
       } else {
         el('feedback').innerHTML = "<span style='color:#ef4444'>❌ Incorrecto.</span> " + (infoText||'');
         log(`❌ Incorrecto. ${state.currentCard?.ref ? 'Ref: '+state.currentCard.ref : ''}`);
-        // Castigo condicional: pierde turno solo si fallas y hay evento skip activo
         if(state.pending.skipOnFail){
           state.skipFlags[idx] = true;
           log(`⏭️ ${state.players[idx].name} perderá su próximo turno (castigo por fallar).`);
         }
       }
-      // limpiar efectos y timer
       state.pending = { mult: 1, skipOnFail: false };
       stopTimer();
       lockInputs();
@@ -488,7 +735,6 @@
     }
 
     function nextTurn(){
-      // manejar saltos de turno
       let next = (state.turn + 1) % state.players.length;
       if(state.skipFlags[next]){ log(`⏭️ ${state.players[next].name} pierde este turno.`); delete state.skipFlags[next]; next = (next + 1) % state.players.length; }
       state.turn = next;
@@ -498,12 +744,13 @@
       el('question').textContent = 'El color de la casilla define la categoría.';
       el('options').innerHTML='';
       el('freeInputWrap').style.display = 'none';
-      // aumentar ronda cuando volvemos al jugador 0
       if(state.turn === 0) state.round += 1;
       renderTopbar(); renderScore();
     }
 
-    // ----- Acciones -----
+    // =======================
+    //  ACCIONES
+    // =======================
     el('addPlayer').onclick = ()=>{
       if(state.players.length>=6) return alert('Máximo 6 jugadores.');
       state.players.push({name:`Jugador ${state.players.length+1}`, score:0});
@@ -552,32 +799,49 @@
     el('validate').onclick = ()=>{ stopTimer(); validate(); };
     el('pass').onclick = ()=>{ log('⏭️ Turno pasado.'); stopTimer(); state.pending={mult:1, skipOnFail:false}; nextTurn(); };
 
-    // ----- Modales -----
-    function toggleModal(id, show){
-      const m = el(id); m.style.display = show? 'flex':'none';
-    }
-    window.toggleModal = toggleModal;
+    // =======================
+    //  EDITOR protegido
+    // =======================
     el('openRules').onclick = ()=> toggleModal('rulesModal', true);
     el('openEditor').onclick = ()=>{
+      if(!isLogged()){
+        openLogin();
+        return;
+      }
+      el('editorArea').setAttribute('contenteditable','true');
       el('editorArea').textContent = JSON.stringify(state.bank, null, 2);
+      el('editorInfo').textContent = `Edita o pega tu banco. Cambios se guardan en esta sesión (LocalStorage). Usuario: ${state.auth.display} (${state.auth.user})`;
+      document.getElementById('saveBtn').disabled = false;
       toggleModal('editorModal', true);
     };
 
     function saveBank(){
+      if(!isLogged()) { alert('⚠️ No tienes permisos para guardar. Inicia sesión.'); return; }
       try{
         const data = JSON.parse(el('editorArea').textContent);
         state.bank = data; localStorage.setItem('constituchall_bank', JSON.stringify(data));
         toggleModal('editorModal', false);
-        log('💾 Banco actualizado.');
+        log(`💾 Banco actualizado (por: ${state.auth.display} - ${state.auth.user}).`);
       }catch(e){ alert('JSON inválido. Revisa comas, llaves y corchetes.'); }
     }
     window.saveBank = saveBank;
 
-    // ----- Boot -----
+    // =======================
+    //  MODALES helper
+    // =======================
+    function toggleModal(id, show){
+      const m = el(id); m.style.display = show? 'flex':'none';
+    }
+    window.toggleModal = toggleModal;
+
+    // =======================
+    //  INICIO
+    // =======================
     (function init(){
       const saved = localStorage.getItem('constituchall_bank');
       state.bank = saved? JSON.parse(saved) : DEFAULT_BANK;
       renderPlayers(); renderTopbar(); renderScore(); setButtons(false);
+      restoreSession();
     })();
   </script>
 </body>
