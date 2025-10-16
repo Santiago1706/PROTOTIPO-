@@ -490,7 +490,7 @@ const DEFAULT_BANK = {
         `;
       } else {
         div.innerHTML = `
-          <div style="grid-column:1/-1" class="muted small">Solo usuarios autorizados pueden editar el banco (Santiago o Administración).</div>
+          <div style="grid-column:1/-1" class="muted small">Solo usuarios autorizados pueden editar.</div>
           <button class="secondary" style="grid-column:1/-1" onclick="openLogin()">🔐 Iniciar sesión</button>
         `;
       }
@@ -591,7 +591,7 @@ const DEFAULT_BANK = {
           stopTimer();
           timeIsUp();
         }
-      },1000);
+      },2500);
     }
     function stopTimer(){
       if(state.timer.id){ clearInterval(state.timer.id); state.timer.id=null; }
